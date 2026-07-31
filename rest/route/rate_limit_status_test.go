@@ -52,26 +52,27 @@ func TestUserRateLimitGetHandlerSelfOnly(t *testing.T) {
 	}
 }
 
-// TestUserRateLimitGetHandlerDisabledReportsServiceUnavailable verifies that
-// there being no limit enforced against the caller -- whether because the
-// limiter is disabled globally or because their user type has no configured
-// limit -- is reported as a 503, so it's visible without being confused with a
-// genuine internal error (a 500, see
-// TestUserRateLimitGetHandlerInternalErrorReturns500).
-func TestUserRateLimitGetHandlerDisabledReportsServiceUnavailable(t *testing.T) {
+// TestUserRateLimitGetHandlerDisabledReportsConflict verifies that there
+// being no limit enforced against the caller -- whether because the limiter
+// is disabled globally or because their user type has no configured limit --
+// is reported as a 409, so it's visible without being confused with a genuine
+// internal error (a 500, see TestUserRateLimitGetHandlerInternalErrorReturns500).
+// A status below 500 is used deliberately so gimlet doesn't also log it as an
+// internal error, since this isn't one.
+func TestUserRateLimitGetHandlerDisabledReportsConflict(t *testing.T) {
 	for testName, testCase := range map[string]func(t *testing.T){
 		"GlobalFlagDisabled": func(t *testing.T) {
 			env := setupRateLimitEnv(t, evergreen.RateLimitConfig{RESTUserPerHour: 100, RESTUserBurst: 5})
 			require.NoError(t, (&evergreen.ServiceFlags{APIRateLimiterDisabled: true}).Set(t.Context()))
 
 			resp := runUserRateLimitHandler(t, env, "me")
-			assert.Equal(t, http.StatusServiceUnavailable, resp.Status())
+			assert.Equal(t, http.StatusConflict, resp.Status())
 		},
 		"UnconfiguredRESTLimit": func(t *testing.T) {
 			env := setupRateLimitEnv(t, evergreen.RateLimitConfig{}) // all zero
 
 			resp := runUserRateLimitHandler(t, env, "me")
-			assert.Equal(t, http.StatusServiceUnavailable, resp.Status())
+			assert.Equal(t, http.StatusConflict, resp.Status())
 		},
 	} {
 		t.Run(testName, func(t *testing.T) {

@@ -411,7 +411,7 @@ func printRateLimitWarning(ctx context.Context, c client.Communicator, userID st
 	if err != nil {
 		// Log any errors unrelated to the limiter being disabled to catch unexpected errors.
 		if !strings.Contains(err.Error(), rateLimitDisabledSubstring) {
-			grip.Warning(ctx, errors.Wrap(err, "getting rate limit info"))
+			grip.Debug(ctx, errors.Wrap(err, "getting rate limit info"))
 		}
 		return
 	}

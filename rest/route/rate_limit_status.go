@@ -29,7 +29,7 @@ func makeUserRateLimitGetHandler(env evergreen.Environment) gimlet.RouteHandler 
 // Factory creates an instance of the handler.
 //
 //	@Summary		Get a user's REST rate limit status
-//	@Description	Get the caller's current REST rate limit status. Callers may only check their own rate limit. Returns a 503 if rate limiting is disabled globally or for the caller's user type.
+//	@Description	Get the caller's current REST rate limit status. Callers may only check their own rate limit. Returns a 409 if rate limiting is disabled globally or for the caller's user type.
 //	@Tags			users
 //	@Router			/users/{user_id}/rate_limit [get]
 //	@Security		Api-User || Api-Key
@@ -96,7 +96,7 @@ func (h *userRateLimitGetHandler) Run(ctx context.Context) gimlet.Responder {
 // because their user type has no configured limit.
 func rateLimitingDisabledResponder() gimlet.Responder {
 	return gimlet.MakeJSONErrorResponder(gimlet.ErrorResponse{
-		StatusCode: http.StatusServiceUnavailable,
+		StatusCode: http.StatusConflict,
 		Message:    "rate limiting is currently disabled",
 	})
 }
